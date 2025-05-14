@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 typedef struct {
-    char date[11];   
-    float amt;       
+    char date[11];    // format: DD/MM/YYYY
+    float amt;        // amount spent
+    char desc[100];   // description/type of expense
 } Exp;
 
 void addExp(void);
@@ -41,28 +41,26 @@ int main(void) {
     return 0;
 }
 
-
 void flushInput(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) { }
 }
 
-
 void addExp(void) {
     Exp e;
     FILE *f = fopen("exp.dat", "a");
-    if (f == NULL) {
+    if (!f) {
         perror("Error opening file for writing");
         return;
     }
 
     printf("Enter Date (DD/MM/YYYY): ");
-    if (fgets(e.date, sizeof(e.date), stdin) == NULL) {
+    if (!fgets(e.date, sizeof(e.date), stdin)) {
         printf("Input error.\n");
         fclose(f);
         return;
     }
-    e.date[strcspn(e.date, "\n")] = 0;  
+    e.date[strcspn(e.date, "\n")] = '\0';  // strip newline
 
     printf("Enter Amount: ");
     if (scanf("%f", &e.amt) != 1) {
@@ -73,34 +71,36 @@ void addExp(void) {
     }
     flushInput();
 
-    fprintf(f, "%s|%.2f\n", e.date, e.amt);
+    printf("Enter Description: ");
+    if (!fgets(e.desc, sizeof(e.desc), stdin)) {
+        printf("Input error.\n");
+        fclose(f);
+        return;
+    }
+    e.desc[strcspn(e.desc, "\n")] = '\0';
+
+    // Save as date|amount|description
+    fprintf(f, "%s|%.2f|%s\n", e.date, e.amt, e.desc);
     fclose(f);
 
     printf("Record added!\n");
 }
 
-
 void viewExp(void) {
     Exp e;
     FILE *f = fopen("exp.dat", "r");
-    if (f == NULL) {
+    if (!f) {
         printf("No records found.\n");
         return;
     }
 
-    printf("\nDate       | Amount\n"
-           "---------------------\n");
-    while (fscanf(f, "%10[^|]|%f\n", e.date, &e.amt) == 2) {
-        printf("%-10s | %.2f\n", e.date, e.amt);
+    printf("\nDate       | Amount   | Description\n");
+    printf("---------------------------------------------\n");
+    // read until newline; description may contain spaces
+    while (fscanf(f, "%10[^|]|%f|%99[^\n]\n", e.date, &e.amt, e.desc) == 3) {
+        printf("%-10s | %8.2f | %s\n", e.date, e.amt, e.desc);
     }
-
     fclose(f);
 }
 
-
 void clearExp(void) {
-    if (remove("exp.dat") == 0)
-        printf("All records cleared!\n");
-    else
-        printf("No records to clear (or error deleting).\n");
-}
