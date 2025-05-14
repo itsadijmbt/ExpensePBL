@@ -48,38 +48,45 @@ void flushInput(void) {
 
 void addExp(void) {
     Exp e;
+    char buf[128];
     FILE *f = fopen("exp.dat", "a");
     if (!f) {
         perror("Error opening file for writing");
         return;
     }
 
+    // 1) Read date
     printf("Enter Date (DD/MM/YYYY): ");
-    if (!fgets(e.date, sizeof(e.date), stdin)) {
+    if (!fgets(buf, sizeof buf, stdin)) {
         printf("Input error.\n");
         fclose(f);
         return;
     }
-    e.date[strcspn(e.date, "\n")] = '\0';  // strip newline
+    buf[strcspn(buf, "\r\n")] = '\0';
+    strncpy(e.date, buf, sizeof e.date);
+    e.date[sizeof(e.date)-1] = '\0';
 
+    // 2) Read amount
     printf("Enter Amount: ");
-    if (scanf("%f", &e.amt) != 1) {
-        printf("Invalid amount.\n");
-        flushInput();
-        fclose(f);
-        return;
-    }
-    flushInput();
-
-    printf("Enter Description: ");
-    if (!fgets(e.desc, sizeof(e.desc), stdin)) {
+    if (!fgets(buf, sizeof buf, stdin)) {
         printf("Input error.\n");
         fclose(f);
         return;
     }
-    e.desc[strcspn(e.desc, "\n")] = '\0';
+    e.amt = strtof(buf, NULL);
 
-    // Save as date|amount|description
+    // 3) Read description
+    printf("Enter Description: ");
+    if (!fgets(buf, sizeof buf, stdin)) {
+        printf("Input error.\n");
+        fclose(f);
+        return;
+    }
+    buf[strcspn(buf, "\r\n")] = '\0';
+    strncpy(e.desc, buf, sizeof e.desc);
+    e.desc[sizeof(e.desc)-1] = '\0';
+
+    // Save record
     fprintf(f, "%s|%.2f|%s\n", e.date, e.amt, e.desc);
     fclose(f);
 
@@ -94,9 +101,8 @@ void viewExp(void) {
         return;
     }
 
-    printf("\nDate       | Amount   | Description\n");
+    printf("\nDate       |  Amount  | Description\n");
     printf("---------------------------------------------\n");
-    // read until newline; description may contain spaces
     while (fscanf(f, "%10[^|]|%f|%99[^\n]\n", e.date, &e.amt, e.desc) == 3) {
         printf("%-10s | %8.2f | %s\n", e.date, e.amt, e.desc);
     }
