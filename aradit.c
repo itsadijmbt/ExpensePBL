@@ -104,3 +104,8 @@ void viewExp(void) {
 }
 
 void clearExp(void) {
+    if (remove("exp.dat") == 0)
+        printf("All records cleared!\n");
+    else
+        printf("No records to clear (or error deleting).\n");
+}
